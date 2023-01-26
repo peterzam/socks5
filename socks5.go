@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"os"
+
+	"codeberg.org/peterzam/socks5/bandwidth"
 )
 
 const (
@@ -52,6 +54,9 @@ type Config struct {
 	// Logger can be used to provide a custom log target.
 	// Defaults to stdout.
 	Logger ErrorLogger
+
+	// Bandwidth Rate limiter
+	Bandwidth bandwidth.ListenerConfig
 
 	// Optional function for dialing out
 	Dial func(ctx context.Context, network, addr string) (net.Conn, error)
@@ -135,6 +140,9 @@ func (s *Server) Serve(l net.Listener) error {
 		}
 		go s.handleUDP(c)
 	}
+
+	ctx := context.Background()
+	l = bandwidth.NewListener(ctx, &s.config.Bandwidth, l)
 
 	for {
 		conn, err := l.Accept()

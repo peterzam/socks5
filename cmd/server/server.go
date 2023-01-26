@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"codeberg.org/peterzam/socks5"
+	"codeberg.org/peterzam/socks5/bandwidth"
 )
 
 var (
@@ -14,13 +15,19 @@ var (
 	pass = flag.String("pass", "", "proxy password")
 	inf  = flag.String("inf", "lo", "proxy out interface")
 	port = flag.Int("port", 1080, "proxy port")
+	up   = flag.Int64("up", 0, "up speed in megabits")
+	down = flag.Int64("down", 0, "down speed in megabits")
 )
 
 func main() {
 	flag.Parse()
+
+	const byte2megabit int64 = 128 * 1024
+
 	socsk5conf := &socks5.Config{
-		Logger: log.New(os.Stdout, "", log.LstdFlags),
-		BindIP: socks5.GetInterfaceIpv4Addr(*inf),
+		Logger:    log.New(os.Stdout, "", log.LstdFlags),
+		BindIP:    socks5.GetInterfaceIpv4Addr(*inf),
+		Bandwidth: *bandwidth.NeweSimpleListenerConfig(*up*byte2megabit, *down*byte2megabit),
 	}
 
 	if *user+*pass != "" {
