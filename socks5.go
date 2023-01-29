@@ -93,6 +93,11 @@ func New(conf *Config) (*Server, error) {
 		conf.Rules = PermitAll()
 	}
 
+	// Ensure we have a bandwidth limit of infinity
+	if conf.Bandwidth.ReadServerRate == nil {
+		conf.Bandwidth = *bandwidth.NeweSimpleListenerConfig(0, 0)
+	}
+
 	// Ensure we have a log target
 	if conf.Logger == nil {
 		conf.Logger = log.New(os.Stdout, "", log.LstdFlags)
