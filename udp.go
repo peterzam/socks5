@@ -1,6 +1,7 @@
 package socks5
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -13,7 +14,7 @@ var udpClientSrcAddr = &net.UDPAddr{IP: net.IPv4zero, Port: 0}
 
 var udpPacketBufferPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, maxUDPPacketSize, maxUDPPacketSize)
+		return make([]byte, maxUDPPacketSize)
 	},
 }
 
@@ -23,7 +24,7 @@ func getUDPPacketBuffer() []byte {
 
 func putUDPPacketBuffer(p []byte) {
 	p = p[:cap(p)]
-	udpPacketBufferPool.Put(p)
+	udpPacketBufferPool.Put(&p)
 }
 
 //FIXME: insecure implementation of UDP server, anyone could send package here without authentication
@@ -117,7 +118,7 @@ func (s *Server) serveUDPConn(udpPacket []byte, reply func([]byte) error) error 
 
 	// resolve addr.
 	if targetAddrSpec.FQDN != "" {
-		_, addr, err := s.config.Resolver.Resolve(nil, targetAddrSpec.FQDN)
+		_, addr, err := s.config.Resolver.Resolve(context.TODO(), targetAddrSpec.FQDN)
 		if err != nil {
 			err := fmt.Errorf("failed to resolve destination '%v': %v", targetAddrSpec.FQDN, err)
 			s.config.Logger.Printf("udp socks: %+v", err)
